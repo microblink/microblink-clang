@@ -51,6 +51,8 @@ RUN cd /home/build && \
     tar xf libunwind.tar.xz && \
     mv libunwind-${LLVM_VERSION}.src libunwind
 
+RUN cd /usr/lib64 && rm libstdc++.so && ln -s /usr/local/lib64/libstdc++.so
+
 # build LLVM in two stages
 RUN cd /home/build && \
     mkdir llvm-build-stage1 && \
@@ -60,15 +62,17 @@ RUN cd /home/build && \
         -DLLVM_ENABLE_LTO=OFF \
         -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;libunwind;libcxx;libcxxabi" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
+	-DLLVM_BINUTILS_INCDIR="/usr/include" \
     	-DLLVM_ENABLE_EH=ON \
     	-DLLVM_ENABLE_RTTI=ON \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
-        -DCMAKE_CXX_LINK_FLAGS="-Wl,-rpath,/usr/local/lib64 -L/usr/local/lib64" \
+	-DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
+	-DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         ../llvm && \
-    ninja clang compiler-rt libunwind.a libc++.so
+    ninja clang compiler-rt libunwind.so libc++.so lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm
 
 # second stage - use built clang to build entire LLVM
 
@@ -76,17 +80,20 @@ ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     CXX="/home/build/llvm-build-stage1/bin/clang++" \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/build/llvm-build-stage1/lib"
 
+
 RUN cd /home/build && \
     mkdir llvm-build-stage2 && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_LTO=OFF \
+        -DLLVM_ENABLE_LTO=ON \
         -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lldb;compiler-rt;libunwind" \
-	-DLLVM_TARGERS_TO_BUILD="Native" \
+	-DLLVM_TARGETS_TO_BUILD="Native" \
 	-DCMAKE_C_FLAGS="-B/usr/local" \
 	-DCMAKE_CXX_FLAGS="-B/usr/local" \
-	-DCMAKE_CXX_LINK_FLAGS="-lc++ -lunwind -lpthread -ldl" \
+	-DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
+	-DCMAKE_RANLIB="/home/build/llvm-build-stage1/bin/llvm-ranlib" \
+	-DCMAKE_NM="/home/build/llvm-build-stage1/bin/llvm-nm" \
     	-DLLVM_ENABLE_EH=ON \
     	-DLLVM_ENABLE_RTTI=ON \
         -DCMAKE_INSTALL_PREFIX=/home/llvm \
