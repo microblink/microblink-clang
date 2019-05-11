@@ -51,7 +51,7 @@ RUN cd /home/build && \
     tar xf libunwind.tar.xz && \
     mv libunwind-${LLVM_VERSION}.src libunwind
 
-RUN cd /usr/lib64 && rm libstdc++.so && ln -s /usr/local/lib64/libstdc++.so
+RUN cd /usr/lib64 && rm libstdc++.so.6 && ln -s /usr/local/lib64/libstdc++.so.6
 
 # build LLVM in two stages
 RUN cd /home/build && \
