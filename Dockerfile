@@ -1,15 +1,13 @@
 FROM microblinkdev/centos-ninja:1.9.0 as ninja
-FROM microblinkdev/centos-gcc:8.3.0 AS gcc
 
-FROM centos:7 AS builder
+FROM microblinkdev/centos-gcc:9.1.0 AS builder
 
 ARG LLVM_VERSION=8.0.0
 
 # setup build environment
 RUN mkdir /home/build
 
-COPY --from=ninja /usr/local /usr/local/
-COPY --from=gcc /usr/local /usr/local/
+COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
 
 # download and install CMake
 RUN cd /home && \
@@ -18,11 +16,10 @@ RUN cd /home && \
     mv cmake-3.14.3-Linux-x86_64 cmake
 
 # install packages required for build
-RUN yum -y install bzip2 zip unzip glibc-devel libedit-devel libxml2-devel ncurses-devel python-devel swig
+RUN yum -y install bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig
 
 # setup environment variables
-ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}" \
-    PATH="/home/cmake/bin:${PATH}"
+ENV PATH="/home/cmake/bin:${PATH}"
 
 # download LLVM
 RUN cd /home/build && \
@@ -51,26 +48,25 @@ RUN cd /home/build && \
     tar xf libunwind.tar.xz && \
     mv libunwind-${LLVM_VERSION}.src libunwind
 
-RUN cd /usr/lib64 && rm libstdc++.so.6 && ln -s /usr/local/lib64/libstdc++.so.6
-
 # build LLVM in two stages
 RUN cd /home/build && \
     mkdir llvm-build-stage1 && \
     cd llvm-build-stage1 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
+        # For some weird reason building libc++abi.so.1 with LTO enabled creates a broken binary
         -DLLVM_ENABLE_LTO=OFF \
         -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;libunwind;libcxx;libcxxabi" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
-	-DLLVM_BINUTILS_INCDIR="/usr/include" \
-    	-DLLVM_ENABLE_EH=ON \
-    	-DLLVM_ENABLE_RTTI=ON \
+        -DLLVM_BINUTILS_INCDIR="/usr/include" \
+        -DLLVM_ENABLE_EH=ON \
+        -DLLVM_ENABLE_RTTI=ON \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
-	-DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
-	-DLIBCXXABI_USE_LLVM_UNWINDER=YES \
+        -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
+        -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         ../llvm && \
     ninja clang compiler-rt libunwind.so libc++.so lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm
 
@@ -80,37 +76,35 @@ ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     CXX="/home/build/llvm-build-stage1/bin/clang++" \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/build/llvm-build-stage1/lib"
 
-
 RUN cd /home/build && \
     mkdir llvm-build-stage2 && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_LTO=ON \
         -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lldb;compiler-rt;libunwind" \
-	-DLLVM_TARGETS_TO_BUILD="Native" \
-	-DCMAKE_C_FLAGS="-B/usr/local" \
-	-DCMAKE_CXX_FLAGS="-B/usr/local" \
-	-DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
-	-DCMAKE_RANLIB="/home/build/llvm-build-stage1/bin/llvm-ranlib" \
-	-DCMAKE_NM="/home/build/llvm-build-stage1/bin/llvm-nm" \
-    	-DLLVM_ENABLE_EH=ON \
-    	-DLLVM_ENABLE_RTTI=ON \
+        -DLLVM_TARGETS_TO_BUILD="Native" \
+        -DLLVM_BINUTILS_INCDIR="/usr/include" \
+        -DCMAKE_C_FLAGS="-B/usr/local" \
+        -DCMAKE_CXX_FLAGS="-B/usr/local" \
+        -DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
+        -DCMAKE_RANLIB="/home/build/llvm-build-stage1/bin/llvm-ranlib" \
+        -DCMAKE_NM="/home/build/llvm-build-stage1/bin/llvm-nm" \
+        -DLLVM_ENABLE_EH=ON \
+        -DLLVM_ENABLE_RTTI=ON \
         -DCMAKE_INSTALL_PREFIX=/home/llvm \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
-        -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         -DLIBCXX_USE_COMPILER_RT=YES \
+        -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
-        -DLIBCXX_USE_COMPILER_RT=YES \
         -DLIBCXXABI_USE_COMPILER_RT=YES \
         ../llvm && \
     ninja
 
 # install everything
-RUN cd /home/build/llvm-build && \
+RUN cd /home/build/llvm-build-stage2 && \
     mv lib64/* ./lib/ && \
     ninja install
 
@@ -119,7 +113,13 @@ RUN cd /home/build/llvm-build && \
 FROM centos:7
 COPY --from=builder /home/llvm /usr/local/
 
-RUN yum -y install glibc-devel
+# GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
+# Note: G++ is not needed
+RUN yum -y install glibc-devel gcc libedit
 
-ENV CC="/usr/local/bin/clang"       \
-    CXX="/usr/local/bin/clang++"
+ENV CC="/usr/local/bin/clang"           \
+    CXX="/usr/local/bin/clang++"        \
+    AR="/usr/local/bin/llvm-ar"         \
+    NM="/usr/local/bin/llvm-nm"         \
+    RANLIB="/usr/local/bin/llvm-ranlib" \
+    LD_LIBRARY_PATH="/usr/local/lib"
