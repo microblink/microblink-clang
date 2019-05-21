@@ -115,7 +115,7 @@ COPY --from=builder /home/llvm /usr/local/
 
 # GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
 # Note: G++ is not needed
-RUN yum -y install glibc-devel gcc libedit
+RUN yum -y install glibc-devel glibc-static gcc libedit
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
