@@ -22,30 +22,29 @@ RUN yum -y install bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel pyt
 ENV PATH="/home/cmake/bin:${PATH}"
 
 # download LLVM
-#https://github.com/llvm/llvm-project/releases/download/llvmorg-8.0.1/llvm-8.0.1.src.tar.xz
 RUN cd /home/build && \
-    curl -o llvm.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz && \
+    curl -o llvm.tar.xz -L http://releases.llvm.org/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz && \
     tar xf llvm.tar.xz && \
     mv llvm-${LLVM_VERSION}.src llvm && \
-    curl -o clang.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/cfe-${LLVM_VERSION}.src.tar.xz && \
+    curl -o clang.tar.xz -L http://releases.llvm.org/${LLVM_VERSION}/cfe-${LLVM_VERSION}.src.tar.xz && \
     tar xf clang.tar.xz && \
     mv cfe-${LLVM_VERSION}.src clang && \
-    curl -o extra.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/clang-tools-extra-${LLVM_VERSION}.src.tar.xz && \
+    curl -o extra.tar.xz -L http://releases.llvm.org/${LLVM_VERSION}/clang-tools-extra-${LLVM_VERSION}.src.tar.xz && \
     tar xf extra.tar.xz && \
     mv clang-tools-extra-${LLVM_VERSION}.src clang-tools-extra && \
-    curl -o libcxx.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz && \
+    curl -o libcxx.tar.xz -L http://releases.llvm.org/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz && \
     tar xf libcxx.tar.xz && \
     mv libcxx-${LLVM_VERSION}.src libcxx && \
-    curl -o libcxxabi.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz && \
+    curl -o libcxxabi.tar.xz -L http://releases.llvm.org/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz && \
     tar xf libcxxabi.tar.xz && \
     mv libcxxabi-${LLVM_VERSION}.src libcxxabi && \
-    curl -o lldb.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/lldb-${LLVM_VERSION}.src.tar.xz && \
+    curl -o lldb.tar.xz -L http://releases.llvm.org/${LLVM_VERSION}/lldb-${LLVM_VERSION}.src.tar.xz && \
     tar xf lldb.tar.xz && \
     mv lldb-${LLVM_VERSION}.src lldb && \
-    curl -o compiler-rt.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/compiler-rt-${LLVM_VERSION}.src.tar.xz && \
+    curl -o compiler-rt.tar.xz -L http://releases.llvm.org/${LLVM_VERSION}/compiler-rt-${LLVM_VERSION}.src.tar.xz && \
     tar xf compiler-rt.tar.xz && \
     mv compiler-rt-${LLVM_VERSION}.src compiler-rt && \
-    curl -o libunwind.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libunwind-${LLVM_VERSION}.src.tar.xz && \
+    curl -o libunwind.tar.xz -L http://releases.llvm.org/${LLVM_VERSION}/libunwind-${LLVM_VERSION}.src.tar.xz && \
     tar xf libunwind.tar.xz && \
     mv libunwind-${LLVM_VERSION}.src libunwind
 
