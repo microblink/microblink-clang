@@ -2,7 +2,7 @@ FROM microblinkdev/centos-ninja:1.9.0 as ninja
 
 FROM microblinkdev/centos-gcc:9.2.0 AS builder
 
-ARG LLVM_VERSION=8.0.1
+ARG LLVM_VERSION=9.0.0
 
 # setup build environment
 RUN mkdir /home/build
