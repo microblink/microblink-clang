@@ -65,6 +65,7 @@ RUN cd /home/build && \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
+        -DCLANG_DEFAULT_UNWINDLIB=libgcc \
         -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         ../llvm && \
@@ -96,6 +97,7 @@ RUN cd /home/build && \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
+        -DCLANG_DEFAULT_UNWINDLIB=libunwind \
         -DLIBCXX_USE_COMPILER_RT=YES \
         -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
