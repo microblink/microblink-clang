@@ -27,9 +27,9 @@ RUN cd /home/build && \
     curl -o llvm.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz && \
     tar xf llvm.tar.xz && \
     mv llvm-${LLVM_VERSION}.src llvm && \
-    curl -o clang.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/cfe-${LLVM_VERSION}.src.tar.xz && \
+    curl -o clang.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/clang-${LLVM_VERSION}.src.tar.xz && \
     tar xf clang.tar.xz && \
-    mv cfe-${LLVM_VERSION}.src clang && \
+    mv clang-${LLVM_VERSION}.src clang && \
     curl -o extra.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/clang-tools-extra-${LLVM_VERSION}.src.tar.xz && \
     tar xf extra.tar.xz && \
     mv clang-tools-extra-${LLVM_VERSION}.src clang-tools-extra && \
