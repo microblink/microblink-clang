@@ -75,7 +75,7 @@ RUN cd /home/build && \
         -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         ../llvm && \
-    ninja clang compiler-rt libunwind.so libc++.so lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm
+    ninja clang compiler-rt libunwind.so libc++.so lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm lld
 
 # second stage - use built clang to build entire LLVM
 
@@ -91,7 +91,7 @@ RUN cd /home/build && \
         -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
-        -DLLVM_ENABLE_LLD=ON \
+        -DLLVM_USE_LINKER="lld" \
         -DCMAKE_C_FLAGS="-B/usr/local" \
         -DCMAKE_CXX_FLAGS="-B/usr/local" \
         -DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
