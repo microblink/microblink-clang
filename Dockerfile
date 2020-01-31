@@ -50,7 +50,7 @@ RUN cd /home/build && \
     mv libunwind-${LLVM_VERSION}.src libunwind && \
     curl -o lld.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/lld-${LLVM_VERSION}.src.tar.xz && \
     tar xf lld.tar.xz && \
-    mv lld-${LLVM_VERSION} lld
+    mv lld-${LLVM_VERSION}.src lld
 
 
 # build LLVM in two stages
