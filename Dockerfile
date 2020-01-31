@@ -47,7 +47,11 @@ RUN cd /home/build && \
     mv compiler-rt-${LLVM_VERSION}.src compiler-rt && \
     curl -o libunwind.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libunwind-${LLVM_VERSION}.src.tar.xz && \
     tar xf libunwind.tar.xz && \
-    mv libunwind-${LLVM_VERSION}.src libunwind
+    mv libunwind-${LLVM_VERSION}.src libunwind && \
+    curl -o lld.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/lld-${LLVM_VERSION}.src.tar.xz && \
+    tar xf lld.tar.xz && \
+    mv lld-${LLVM_VERSION} lld
+
 
 # build LLVM in two stages
 RUN cd /home/build && \
