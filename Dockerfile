@@ -57,7 +57,7 @@ RUN cd /home/build && \
         -DCMAKE_BUILD_TYPE=Release \
         # For some weird reason building libc++abi.so.1 with LTO enabled creates a broken binary
         -DLLVM_ENABLE_LTO=OFF \
-        -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;libunwind;libcxx;libcxxabi" \
+        -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;libunwind;libcxx;libcxxabi;lld" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_ENABLE_EH=ON \
@@ -67,6 +67,7 @@ RUN cd /home/build && \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
         -DCLANG_DEFAULT_UNWINDLIB=libgcc \
+        -DCLANG_DEFAULT_LINKER=lld \
         -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         ../llvm && \
@@ -83,9 +84,11 @@ RUN cd /home/build && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lldb;compiler-rt;libunwind" \
+        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
+        -DLLVM_USE_LINKER="lld" \
+        -DLLVM_ENABLE_LLD=ON \
         -DCMAKE_C_FLAGS="-B/usr/local" \
         -DCMAKE_CXX_FLAGS="-B/usr/local" \
         -DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
@@ -96,6 +99,7 @@ RUN cd /home/build && \
         -DCMAKE_INSTALL_PREFIX=/home/llvm \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
+        -DCLANG_DEFAULT_LINKER=lld \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
         -DCLANG_DEFAULT_UNWINDLIB=libunwind \
