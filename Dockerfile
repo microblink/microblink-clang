@@ -91,7 +91,6 @@ RUN cd /home/build && \
         -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
-        -DLLVM_USE_LINKER="lld" \
         -DLLVM_ENABLE_LLD=ON \
         -DCMAKE_C_FLAGS="-B/usr/local" \
         -DCMAKE_CXX_FLAGS="-B/usr/local" \
