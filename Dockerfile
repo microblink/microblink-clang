@@ -1,4 +1,4 @@
-FROM microblinkdev/centos-ninja:1.9.0 as ninja
+FROM microblinkdev/centos-ninja:1.10.0 as ninja
 
 FROM microblinkdev/centos-gcc:9.2.0 AS builder
 
@@ -11,9 +11,9 @@ COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
 
 # download and install CMake
 RUN cd /home && \
-    curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v3.14.4/cmake-3.14.4-Linux-x86_64.tar.gz && \
+    curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v3.16.3/cmake-3.16.3-Linux-x86_64.tar.gz && \
     tar xf cmake.tar.gz && \
-    mv cmake-3.14.4-Linux-x86_64 cmake
+    mv cmake-3.16.3-Linux-x86_64 cmake
 
 # install packages required for build
 RUN yum -y install bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig
@@ -47,7 +47,11 @@ RUN cd /home/build && \
     mv compiler-rt-${LLVM_VERSION}.src compiler-rt && \
     curl -o libunwind.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libunwind-${LLVM_VERSION}.src.tar.xz && \
     tar xf libunwind.tar.xz && \
-    mv libunwind-${LLVM_VERSION}.src libunwind
+    mv libunwind-${LLVM_VERSION}.src libunwind && \
+    curl -o lld.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/lld-${LLVM_VERSION}.src.tar.xz && \
+    tar xf lld.tar.xz && \
+    mv lld-${LLVM_VERSION}.src lld
+
 
 # build LLVM in two stages
 RUN cd /home/build && \
@@ -57,7 +61,7 @@ RUN cd /home/build && \
         -DCMAKE_BUILD_TYPE=Release \
         # For some weird reason building libc++abi.so.1 with LTO enabled creates a broken binary
         -DLLVM_ENABLE_LTO=OFF \
-        -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;libunwind;libcxx;libcxxabi" \
+        -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;libunwind;libcxx;libcxxabi;lld" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_ENABLE_EH=ON \
@@ -67,10 +71,11 @@ RUN cd /home/build && \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
         -DCLANG_DEFAULT_UNWINDLIB=libgcc \
+        -DCLANG_DEFAULT_LINKER=lld \
         -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         ../llvm && \
-    ninja clang compiler-rt libunwind.so libc++.so lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm
+    ninja clang compiler-rt libunwind.so libc++.so lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm lld
 
 # second stage - use built clang to build entire LLVM
 
@@ -83,9 +88,10 @@ RUN cd /home/build && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lldb;compiler-rt;libunwind" \
+        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
+        -DLLVM_USE_LINKER="lld" \
         -DCMAKE_C_FLAGS="-B/usr/local" \
         -DCMAKE_CXX_FLAGS="-B/usr/local" \
         -DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
@@ -96,6 +102,7 @@ RUN cd /home/build && \
         -DCMAKE_INSTALL_PREFIX=/home/llvm \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
+        -DCLANG_DEFAULT_LINKER=lld \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
         -DCLANG_DEFAULT_UNWINDLIB=libunwind \
