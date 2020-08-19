@@ -1,4 +1,4 @@
-FROM microblinkdev/centos-ninja:1.10.0 as ninja
+FROM microblinkdev/centos-ninja:1.10.1 as ninja
 
 FROM microblinkdev/centos-gcc:9.2.0 AS builder
 
