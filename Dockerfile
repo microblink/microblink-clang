@@ -110,12 +110,12 @@ RUN cd /home/build && \
         -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         -DLIBCXXABI_USE_COMPILER_RT=YES \
+	-DLLDB_ENABLE_PYTHON=NO \
         ../llvm && \
     ninja
 
 # install everything
 RUN cd /home/build/llvm-build-stage2 && \
-    mv lib64/* ./lib/ && \
     ninja install
 
 # Stage 2, copy artifacts to new image and prepare environment
