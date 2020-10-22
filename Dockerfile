@@ -116,7 +116,8 @@ RUN cd /home/build && \
 
 # install everything
 RUN cd /home/build/llvm-build-stage2 && \
-    ninja install
+    ninja install && \
+    cp /usr/local/lib64/libatomic* /home/llvm/lib/
 
 # Stage 2, copy artifacts to new image and prepare environment
 
