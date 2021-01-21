@@ -11,9 +11,9 @@ COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
 
 # download and install CMake
 RUN cd /home && \
-    curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v3.16.3/cmake-3.16.3-Linux-x86_64.tar.gz && \
+    curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3-Linux-x86_64.tar.gz && \
     tar xf cmake.tar.gz && \
-    mv cmake-3.16.3-Linux-x86_64 cmake
+    mv cmake-3.19.3-Linux-x86_64 cmake
 
 # install packages required for build
 RUN yum -y install bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig
