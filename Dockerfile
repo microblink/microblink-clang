@@ -2,21 +2,20 @@ FROM microblinkdev/centos-ninja:1.10.2 as ninja
 
 FROM microblinkdev/centos-gcc:9.2.0 AS builder
 
-ARG LLVM_VERSION=11.1.0
-
+ARG LLVM_VERSION=12.0.0
+ARG CMAKE_VERSION=3.19.8
 # setup build environment
 RUN mkdir /home/build
 
 COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
-
 # download and install CMake
 RUN cd /home && \
-    curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3-Linux-x86_64.tar.gz && \
+    curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz && \
     tar xf cmake.tar.gz && \
-    mv cmake-3.19.3-Linux-x86_64 cmake
+    mv cmake-${CMAKE_VERSION}-Linux-x86_64 cmake
 
 # install packages required for build
-RUN yum -y install bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig
+RUN yum -y install bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3
 
 # setup environment variables
 ENV PATH="/home/cmake/bin:${PATH}"
