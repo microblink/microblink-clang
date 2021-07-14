@@ -91,8 +91,9 @@ RUN cd /home/build && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
+        -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
+        -DLLVM_ENABLE_LTO=ON \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_USE_LINKER="lld" \
         -DCMAKE_C_FLAGS="-B/usr/local" \
@@ -116,7 +117,7 @@ RUN cd /home/build && \
         -DLIBCXX_ABI_VERSION=2 \
         -DLIBCXX_ABI_UNSTABLE=ON \
         -DLIBCXX_ENABLE_EXCEPTIONS=OFF \
-        -DLIBCXX_ENABLE_RTTI=OFF \
+        -DLIBCXX_ENABLE_RTTI=ON \
         -DLLDB_ENABLE_PYTHON=NO \
         ../llvm && \
     ninja
