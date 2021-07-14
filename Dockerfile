@@ -1,9 +1,9 @@
 FROM microblinkdev/centos-ninja:1.10.2 as ninja
 
-FROM microblinkdev/centos-gcc:9.2.0 AS builder
+FROM microblinkdev/centos-gcc:11.1.0 AS builder
 
-ARG LLVM_VERSION=12.0.0
-ARG CMAKE_VERSION=3.19.8
+ARG LLVM_VERSION=12.0.1
+ARG CMAKE_VERSION=3.20.5
 # setup build environment
 RUN mkdir /home/build
 
@@ -12,7 +12,7 @@ COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
 RUN cd /home && \
     curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz && \
     tar xf cmake.tar.gz && \
-    mv cmake-${CMAKE_VERSION}-Linux-x86_64 cmake
+    mv cmake-${CMAKE_VERSION}-linux-x86_64 cmake
 
 # install packages required for build
 RUN yum -y install bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3
@@ -73,6 +73,10 @@ RUN cd /home/build && \
         -DCLANG_DEFAULT_LINKER=lld \
         -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
+        -DLIBCXX_ABI_VERSION=2 \
+        -DLIBCXX_ABI_UNSTABLE=ON \
+        -DLIBCXX_ENABLE_EXCEPTIONS=OFF \
+        -DLIBCXX_ENABLE_RTTI=OFF \
         ../llvm && \
     ninja clang compiler-rt libunwind.so libc++.so lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm lld
 
@@ -87,8 +91,9 @@ RUN cd /home/build && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
+        -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
+        -DLLVM_ENABLE_LTO=ON \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_USE_LINKER="lld" \
         -DCMAKE_C_FLAGS="-B/usr/local" \
@@ -96,8 +101,8 @@ RUN cd /home/build && \
         -DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
         -DCMAKE_RANLIB="/home/build/llvm-build-stage1/bin/llvm-ranlib" \
         -DCMAKE_NM="/home/build/llvm-build-stage1/bin/llvm-nm" \
-        -DLLVM_ENABLE_EH=ON \
-        -DLLVM_ENABLE_RTTI=ON \
+        -DLLVM_ENABLE_EH=OFF \
+        -DLLVM_ENABLE_RTTI=OFF \
         -DCMAKE_INSTALL_PREFIX=/home/llvm \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
@@ -109,7 +114,11 @@ RUN cd /home/build && \
         -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
         -DLIBCXXABI_USE_LLVM_UNWINDER=YES \
         -DLIBCXXABI_USE_COMPILER_RT=YES \
-	-DLLDB_ENABLE_PYTHON=NO \
+        -DLIBCXX_ABI_VERSION=2 \
+        -DLIBCXX_ABI_UNSTABLE=ON \
+        -DLIBCXX_ENABLE_EXCEPTIONS=OFF \
+        -DLIBCXX_ENABLE_RTTI=ON \
+        -DLLDB_ENABLE_PYTHON=NO \
         ../llvm && \
     ninja
 
