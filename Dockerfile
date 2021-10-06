@@ -1,27 +1,28 @@
 FROM microblinkdev/centos-ninja:1.10.2 as ninja
 
-FROM microblinkdev/centos-gcc:11.1.0 AS builder
+FROM amazonlinux:2 AS builder
 
-ARG LLVM_VERSION=12.0.1
-ARG CMAKE_VERSION=3.20.5
+ARG LLVM_VERSION=13.0.0
+ARG CMAKE_VERSION=3.21.3
 # setup build environment
 RUN mkdir /home/build
 
 COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
+
+# install packages required for build
+RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc-c++ binutils-devel
+
 # download and install CMake
 RUN cd /home && \
     curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz && \
     tar xf cmake.tar.gz && \
     mv cmake-${CMAKE_VERSION}-linux-x86_64 cmake
 
-# install packages required for build
-RUN yum -y install bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3
 
 # setup environment variables
 ENV PATH="/home/cmake/bin:${PATH}"
 
 # download LLVM
-#https://github.com/llvm/llvm-project/releases/download/llvmorg-8.0.1/llvm-8.0.1.src.tar.xz
 RUN cd /home/build && \
     curl -o llvm.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz && \
     tar xf llvm.tar.xz && \
@@ -49,8 +50,13 @@ RUN cd /home/build && \
     mv libunwind-${LLVM_VERSION}.src libunwind && \
     curl -o lld.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/lld-${LLVM_VERSION}.src.tar.xz && \
     tar xf lld.tar.xz && \
-    mv lld-${LLVM_VERSION}.src lld
-
+    mv lld-${LLVM_VERSION}.src lld && \
+    curl -o openmp.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/openmp-${LLVM_VERSION}.src.tar.xz && \
+    tar xf openmp.tar.xz && \
+    mv openmp-${LLVM_VERSION}.src openmp && \
+    curl -o polly.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/polly-${LLVM_VERSION}.src.tar.xz && \
+    tar xf polly.tar.xz && \
+    mv polly-${LLVM_VERSION}.src polly
 
 # build LLVM in two stages
 RUN cd /home/build && \
@@ -86,14 +92,19 @@ ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     CXX="/home/build/llvm-build-stage1/bin/clang++" \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/build/llvm-build-stage1/lib"
 
+# add additional packages needed to build second stage
+RUN yum -y install python3-devel
+
 RUN cd /home/build && \
     mkdir llvm-build-stage2 && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind" \
+        -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind;clang-tools-extra;polly" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_ENABLE_LTO=ON \
+        # LTO link jobs use lots of RAM which can kill the build server - use 20 jobs (average 6.4 GB per job - some jobs use over 12 GB, but most of them less than 6 GB)
+        -DLLVM_PARALLEL_LINK_JOBS=20 \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_USE_LINKER="lld" \
         -DCMAKE_C_FLAGS="-B/usr/local" \
@@ -118,23 +129,22 @@ RUN cd /home/build && \
         -DLIBCXX_ABI_UNSTABLE=ON \
         -DLIBCXX_ENABLE_EXCEPTIONS=OFF \
         -DLIBCXX_ENABLE_RTTI=ON \
-        -DLLDB_ENABLE_PYTHON=NO \
+        -DLLDB_ENABLE_PYTHON=ON \
         ../llvm && \
     ninja
 
 # install everything
 RUN cd /home/build/llvm-build-stage2 && \
-    ninja install && \
-    cp /usr/local/lib64/libatomic* /home/llvm/lib/
+    ninja install
 
 # Stage 2, copy artifacts to new image and prepare environment
 
-FROM centos:7
+FROM amazonlinux:2
 COPY --from=builder /home/llvm /usr/local/
 
 # GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
 # Note: G++ is not needed
-RUN yum -y install glibc-devel glibc-static gcc libedit
+RUN yum -y install glibc-devel glibc-static gcc libedit python3
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \

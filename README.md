@@ -1,2 +1,2 @@
 # centos-clang
-Latest clang on Centos 7
+Latest clang on Amazon Linux 2 (a CentOS-based linux used in AWS)
