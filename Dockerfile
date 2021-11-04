@@ -102,7 +102,7 @@ RUN cd /home/build && \
         -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind;clang-tools-extra;polly" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
-        -DLLVM_ENABLE_LTO=ON \
+        -DLLVM_ENABLE_LTO=Thin \
         # LTO link jobs use lots of RAM which can kill the build server - use 20 jobs (average 6.4 GB per job - some jobs use over 12 GB, but most of them less than 6 GB)
         -DLLVM_PARALLEL_LINK_JOBS=20 \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
