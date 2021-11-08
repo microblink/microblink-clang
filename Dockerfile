@@ -9,6 +9,8 @@ RUN mkdir /home/build
 
 COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
 
+ENV NINJA_STATUS="[%f/%t %c/sec] "
+
 # install packages required for build
 RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc-c++ binutils-devel
 
@@ -104,11 +106,13 @@ RUN cd /home/build && \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_ENABLE_LTO=Thin \
         # LTO link jobs use lots of RAM which can kill the build server - use 20 jobs (average 6.4 GB per job - some jobs use over 12 GB, but most of them less than 6 GB)
-        -DLLVM_PARALLEL_LINK_JOBS=20 \
+        # with ThinLTO all CPUs are used for LTO, so don't overcommit the CPU with too many parallel LTO jobs
+        # there is one monolithic LTO job, so 3 effectively means 2
+        -DLLVM_PARALLEL_LINK_JOBS=3 \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_USE_LINKER="lld" \
-        -DCMAKE_C_FLAGS="-B/usr/local" \
-        -DCMAKE_CXX_FLAGS="-B/usr/local" \
+        -DCMAKE_C_FLAGS="-B/usr/local -fsplit-lto-unit" \
+        -DCMAKE_CXX_FLAGS="-B/usr/local -fsplit-lto-unit" \
         -DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
         -DCMAKE_RANLIB="/home/build/llvm-build-stage1/bin/llvm-ranlib" \
         -DCMAKE_NM="/home/build/llvm-build-stage1/bin/llvm-nm" \
