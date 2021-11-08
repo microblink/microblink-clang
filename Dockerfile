@@ -150,5 +150,4 @@ ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
     AR="/usr/local/bin/llvm-ar"         \
     NM="/usr/local/bin/llvm-nm"         \
-    RANLIB="/usr/local/bin/llvm-ranlib" \
-    LD_LIBRARY_PATH="/usr/local/lib"
+    RANLIB="/usr/local/bin/llvm-ranlib"
