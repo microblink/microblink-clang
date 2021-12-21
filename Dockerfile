@@ -1,9 +1,10 @@
-FROM microblinkdev/centos-ninja:1.10.2 as ninja
+FROM --platform=$BUILDPLATFORM microblinkdev/amazonlinux-ninja:1.10.2 as ninja
 
-FROM amazonlinux:2 AS builder
+FROM --platform=$BUILDPLATFORM amazonlinux:2 AS builder
 
+ARG BUILDPLATFORM
 ARG LLVM_VERSION=13.0.0
-ARG CMAKE_VERSION=3.21.3
+ARG CMAKE_VERSION=3.22.1
 # setup build environment
 RUN mkdir /home/build
 
@@ -11,14 +12,17 @@ COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
 
 ENV NINJA_STATUS="[%f/%t %c/sec] "
 
+RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
+
 # install packages required for build
 RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc-c++ binutils-devel
 
 # download and install CMake
 RUN cd /home && \
-    curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz && \
+    if [ "$BUILDPLATFORM" == "linux/arm64" ]; then arch=aarch64; else arch=x86_64; fi && \
+    curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-${arch}.tar.gz && \
     tar xf cmake.tar.gz && \
-    mv cmake-${CMAKE_VERSION}-linux-x86_64 cmake
+    mv cmake-${CMAKE_VERSION}-linux-${arch} cmake
 
 
 # setup environment variables
@@ -143,7 +147,7 @@ RUN cd /home/build/llvm-build-stage2 && \
 
 # Stage 2, copy artifacts to new image and prepare environment
 
-FROM amazonlinux:2
+FROM --platform=$BUILDPLATFORM amazonlinux:2
 COPY --from=builder /home/llvm /usr/local/
 
 # GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
