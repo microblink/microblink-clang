@@ -1,6 +1,6 @@
-FROM --platform=$BUILDPLATFORM microblinkdev/amazonlinux-ninja:1.10.2 as ninja
+FROM microblinkdev/amazonlinux-ninja:1.10.2 as ninja
 
-FROM --platform=$BUILDPLATFORM amazonlinux:2 AS builder
+FROM amazonlinux:2 AS builder
 
 ARG BUILDPLATFORM
 ARG LLVM_VERSION=13.0.0
@@ -101,6 +101,12 @@ ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
 # add additional packages needed to build second stage
 RUN yum -y install python3-devel
 
+# for building the ARM64 image, we need newer kernel headers that provide user_sve_header and sve_vl_valid
+# see: https://github.com/llvm/llvm-project/issues/52823
+# and: https://github.com/spack/spack/issues/27992
+
+RUN amazon-linux-extras install -y kernel-ng && yum -y update
+
 RUN cd /home/build && \
     mkdir llvm-build-stage2 && \
     cd llvm-build-stage2 && \
@@ -147,7 +153,7 @@ RUN cd /home/build/llvm-build-stage2 && \
 
 # Stage 2, copy artifacts to new image and prepare environment
 
-FROM --platform=$BUILDPLATFORM amazonlinux:2
+FROM amazonlinux:2
 COPY --from=builder /home/llvm /usr/local/
 
 # GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
