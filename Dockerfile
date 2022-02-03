@@ -15,7 +15,13 @@ ENV NINJA_STATUS="[%f/%t %c/sec] "
 RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
-RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc-c++ binutils-devel
+RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc-c++ binutils-devel python3-devel
+
+# for building the ARM64 image, we need newer kernel headers that provide user_sve_header and sve_vl_valid
+# see: https://github.com/llvm/llvm-project/issues/52823
+# and: https://github.com/spack/spack/issues/27992
+
+RUN amazon-linux-extras install -y kernel-ng && yum -y update
 
 # download and install CMake
 RUN cd /home && \
@@ -97,15 +103,6 @@ RUN cd /home/build && \
 ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     CXX="/home/build/llvm-build-stage1/bin/clang++" \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/build/llvm-build-stage1/lib"
-
-# add additional packages needed to build second stage
-RUN yum -y install python3-devel
-
-# for building the ARM64 image, we need newer kernel headers that provide user_sve_header and sve_vl_valid
-# see: https://github.com/llvm/llvm-project/issues/52823
-# and: https://github.com/spack/spack/issues/27992
-
-RUN amazon-linux-extras install -y kernel-ng && yum -y update
 
 RUN cd /home/build && \
     mkdir llvm-build-stage2 && \
