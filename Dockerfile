@@ -3,8 +3,8 @@ FROM microblinkdev/amazonlinux-ninja:1.10.2 as ninja
 FROM amazonlinux:2 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=13.0.0
-ARG CMAKE_VERSION=3.22.1
+ARG LLVM_VERSION=13.0.1
+ARG CMAKE_VERSION=3.22.2
 # setup build environment
 RUN mkdir /home/build
 
