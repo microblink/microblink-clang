@@ -15,7 +15,7 @@ ENV NINJA_STATUS="[%f/%t %c/sec] "
 RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
-RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc-c++ binutils-devel python3-devel
+RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc10-c++ binutils-devel python3-devel
 
 # for building the ARM64 image, we need newer kernel headers that provide user_sve_header and sve_vl_valid
 # see: https://github.com/llvm/llvm-project/issues/52823
@@ -31,8 +31,10 @@ RUN cd /home && \
     mv cmake-${CMAKE_VERSION}-linux-${arch} cmake
 
 
-# setup environment variables
-ENV PATH="/home/cmake/bin:${PATH}"
+# setup environment variables - use gcc 10 instead of the default gcc 7 which crashes when building LLVM 13.0.1 on Aarch64
+ENV PATH="/home/cmake/bin:${PATH}"  \
+    CC="/usr/bin/gcc10-gcc"         \
+    CXX="/usr/bin/gcc10-g++"
 
 # download LLVM
 RUN cd /home/build && \
