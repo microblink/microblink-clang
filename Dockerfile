@@ -106,12 +106,16 @@ ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     CXX="/home/build/llvm-build-stage1/bin/clang++" \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/build/llvm-build-stage1/lib"
 
+# clang-tools-extra will be build only for Intel image. It's slow to build and not needed on aarch64 as currently no developer machines run on this platform and we still
+# don't have ARM-based high-end server so we build the image on M1 macOS VM.
+
 RUN cd /home/build && \
     mkdir llvm-build-stage2 && \
     cd llvm-build-stage2 && \
+    if [ "$BUILDPLATFORM" != "linux/arm64" ]; then additional_projects=";clang-tools-extra"; fi && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind;clang-tools-extra;polly" \
+        -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind;polly${additional_projects}" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_ENABLE_LTO=Thin \
         # LTO link jobs use lots of RAM which can kill the build server - use 20 jobs (average 6.4 GB per job - some jobs use over 12 GB, but most of them less than 6 GB)
