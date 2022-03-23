@@ -15,7 +15,7 @@ ENV NINJA_STATUS="[%f/%t %c/sec] "
 RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
-RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc10-c++ binutils-devel python3-devel
+RUN yum -y install tar gzip bzip3 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc10-c++ binutils-devel python3-devel git
 
 # for building the ARM64 image, we need newer kernel headers that provide user_sve_header and sve_vl_valid
 # see: https://github.com/llvm/llvm-project/issues/52823
@@ -36,42 +36,9 @@ ENV PATH="/home/cmake/bin:${PATH}"  \
     CC="/usr/bin/gcc10-gcc"         \
     CXX="/usr/bin/gcc10-g++"
 
-# download LLVM
+# clone LLVM
 RUN cd /home/build && \
-    curl -o llvm.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz && \
-    tar xf llvm.tar.xz && \
-    mv llvm-${LLVM_VERSION}.src llvm && \
-    cp -r llvm/runtimes ./ && \
-    curl -o clang.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/clang-${LLVM_VERSION}.src.tar.xz && \
-    tar xf clang.tar.xz && \
-    mv clang-${LLVM_VERSION}.src clang && \
-    curl -o extra.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/clang-tools-extra-${LLVM_VERSION}.src.tar.xz && \
-    tar xf extra.tar.xz && \
-    mv clang-tools-extra-${LLVM_VERSION}.src clang-tools-extra && \
-    curl -o libcxx.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz && \
-    tar xf libcxx.tar.xz && \
-    mv libcxx-${LLVM_VERSION}.src libcxx && \
-    curl -o libcxxabi.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz && \
-    tar xf libcxxabi.tar.xz && \
-    mv libcxxabi-${LLVM_VERSION}.src libcxxabi && \
-    curl -o lldb.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/lldb-${LLVM_VERSION}.src.tar.xz && \
-    tar xf lldb.tar.xz && \
-    mv lldb-${LLVM_VERSION}.src lldb && \
-    curl -o compiler-rt.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/compiler-rt-${LLVM_VERSION}.src.tar.xz && \
-    tar xf compiler-rt.tar.xz && \
-    mv compiler-rt-${LLVM_VERSION}.src compiler-rt && \
-    curl -o libunwind.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libunwind-${LLVM_VERSION}.src.tar.xz && \
-    tar xf libunwind.tar.xz && \
-    mv libunwind-${LLVM_VERSION}.src libunwind && \
-    curl -o lld.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/lld-${LLVM_VERSION}.src.tar.xz && \
-    tar xf lld.tar.xz && \
-    mv lld-${LLVM_VERSION}.src lld && \
-    curl -o openmp.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/openmp-${LLVM_VERSION}.src.tar.xz && \
-    tar xf openmp.tar.xz && \
-    mv openmp-${LLVM_VERSION}.src openmp && \
-    curl -o polly.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/polly-${LLVM_VERSION}.src.tar.xz && \
-    tar xf polly.tar.xz && \
-    mv polly-${LLVM_VERSION}.src polly
+    git clone --depth 1 --branch llvmorg-${LLVM_VERSION} https://github.com/llvm/llvm-project
 
 # build LLVM in two stages
 RUN cd /home/build && \
@@ -102,14 +69,14 @@ RUN cd /home/build && \
         -DLIBCXX_INCLUDE_BENCHMARKS=OFF \
         -DLIBCXX_INCLUDE_TESTS=OFF \
         -DLIBCXX_INCLUDE_DOCS=OFF \
-        /home/build/llvm && \
+        /home/build/llvm-project/llvm && \
     ninja clang compiler-rt unwind cxx lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm lld
 
 # second stage - use built clang to build entire LLVM
 
 ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     CXX="/home/build/llvm-build-stage1/bin/clang++" \
-    LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/build/llvm-build-stage1/lib"
+    LD_LIBRARY_PATH="/home/build/llvm-build-stage1/lib/x86_64-unknown-linux-gnu:/home/build/llvm-build-stage1/lib/aarch64-unknown-linux-gnu"
 
 # clang-tools-extra will be build only for Intel image. It's slow to build and not needed on aarch64 as currently no developer machines run on this platform and we still
 # don't have ARM-based high-end server so we build the image on M1 macOS VM.
@@ -156,7 +123,7 @@ RUN cd /home/build && \
         -DLIBCXX_INCLUDE_BENCHMARKS=OFF \
         -DLIBCXX_INCLUDE_TESTS=OFF \
         -DLIBCXX_INCLUDE_DOCS=OFF \
-        /home/build/llvm && \
+        /home/build/llvm-project/llvm && \
     ninja
 
 # install everything
