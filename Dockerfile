@@ -41,6 +41,7 @@ RUN cd /home/build && \
     curl -o llvm.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz && \
     tar xf llvm.tar.xz && \
     mv llvm-${LLVM_VERSION}.src llvm && \
+    cp -r llvm/runtimes ./ && \
     curl -o clang.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/clang-${LLVM_VERSION}.src.tar.xz && \
     tar xf clang.tar.xz && \
     mv clang-${LLVM_VERSION}.src clang && \
@@ -80,7 +81,8 @@ RUN cd /home/build && \
         -DCMAKE_BUILD_TYPE=Release \
         # For some weird reason building libc++abi.so.1 with LTO enabled creates a broken binary
         -DLLVM_ENABLE_LTO=OFF \
-        -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;libunwind;libcxx;libcxxabi;lld" \
+        -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;lld" \
+        -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_ENABLE_EH=ON \
@@ -97,8 +99,11 @@ RUN cd /home/build && \
         -DLIBCXX_ABI_UNSTABLE=ON \
         -DLIBCXX_ENABLE_EXCEPTIONS=OFF \
         -DLIBCXX_ENABLE_RTTI=OFF \
-        ../llvm && \
-    ninja clang compiler-rt libunwind.so libc++.so lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm lld
+        -DLIBCXX_INCLUDE_BENCHMARKS=OFF \
+        -DLIBCXX_INCLUDE_TESTS=OFF \
+        -DLIBCXX_INCLUDE_DOCS=OFF \
+        /home/build/llvm && \
+    ninja clang compiler-rt unwind cxx lib/LLVMgold.so llvm-ar llvm-ranlib llvm-nm lld
 
 # second stage - use built clang to build entire LLVM
 
@@ -115,7 +120,8 @@ RUN cd /home/build && \
     if [ "$BUILDPLATFORM" != "linux/arm64" ]; then additional_projects=";clang-tools-extra"; fi && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;lld;lldb;compiler-rt;libunwind;polly${additional_projects}" \
+        -DLLVM_ENABLE_PROJECTS="clang;lld;lldb;compiler-rt;polly${additional_projects}" \
+        -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_ENABLE_LTO=Thin \
         # LTO link jobs use lots of RAM which can kill the build server - use 20 jobs (average 6.4 GB per job - some jobs use over 12 GB, but most of them less than 6 GB)
@@ -147,7 +153,10 @@ RUN cd /home/build && \
         -DLIBCXX_ENABLE_EXCEPTIONS=OFF \
         -DLIBCXX_ENABLE_RTTI=ON \
         -DLLDB_ENABLE_PYTHON=ON \
-        ../llvm && \
+        -DLIBCXX_INCLUDE_BENCHMARKS=OFF \
+        -DLIBCXX_INCLUDE_TESTS=OFF \
+        -DLIBCXX_INCLUDE_DOCS=OFF \
+        /home/build/llvm && \
     ninja
 
 # install everything
