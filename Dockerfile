@@ -87,8 +87,8 @@ RUN cd /home/build && \
     if [ "$BUILDPLATFORM" != "linux/arm64" ]; then additional_projects=";clang-tools-extra"; fi && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;lld;lldb;compiler-rt;polly${additional_projects}" \
-        -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
+        -DLLVM_ENABLE_PROJECTS="clang;lld;lldb;compiler-rt;libcxx;libcxxabi;libunwind;polly${additional_projects}" \
+        # -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_ENABLE_LTO=Thin \
         # LTO link jobs use lots of RAM which can kill the build server - use 20 jobs (average 6.4 GB per job - some jobs use over 12 GB, but most of them less than 6 GB)
@@ -104,6 +104,7 @@ RUN cd /home/build && \
         -DCMAKE_NM="/home/build/llvm-build-stage1/bin/llvm-nm" \
         -DLLVM_ENABLE_EH=OFF \
         -DLLVM_ENABLE_RTTI=OFF \
+        -DLLVM_BUILD_LLVM_DYLIB=ON \
         -DCMAKE_INSTALL_PREFIX=/home/llvm \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
