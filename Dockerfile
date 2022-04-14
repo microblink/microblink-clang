@@ -3,8 +3,8 @@ FROM microblinkdev/amazonlinux-ninja:1.10.2 as ninja
 FROM amazonlinux:2 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=14.0.0
-ARG CMAKE_VERSION=3.22.3
+ARG LLVM_VERSION=14.0.1
+ARG CMAKE_VERSION=3.23.1
 # setup build environment
 RUN mkdir /home/build
 
@@ -89,7 +89,6 @@ RUN cd /home/build && \
         -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_ENABLE_PROJECTS="clang;lld;lldb;compiler-rt;libcxx;libcxxabi;libunwind;polly${additional_projects}" \
         # -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
-        -DLLVM_TARGETS_TO_BUILD="Native" \
         -DLLVM_ENABLE_LTO=Thin \
         # LTO link jobs use lots of RAM which can kill the build server - use 20 jobs (average 6.4 GB per job - some jobs use over 12 GB, but most of them less than 6 GB)
         # with ThinLTO all CPUs are used for LTO, so don't overcommit the CPU with too many parallel LTO jobs
@@ -138,7 +137,8 @@ COPY --from=builder /home/llvm /usr/local/
 
 # GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
 # Note: G++ is not needed
-RUN yum -y install glibc-devel glibc-static gcc libedit python3
+# ncurses-devel is needed when developing LLVM-based tools
+RUN yum -y install glibc-devel glibc-static gcc libedit python3 ncurses-devel
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
