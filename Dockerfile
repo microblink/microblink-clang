@@ -1,13 +1,15 @@
-FROM microblinkdev/amazonlinux-ninja:1.10.2 as ninja
+FROM microblinkdev/amazonlinux-ninja:1.11.0 as ninja
+FROM microblinkdev/amazonlinux-python:3.10.4 as python
 
 FROM amazonlinux:2 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=14.0.3
-ARG CMAKE_VERSION=3.23.1
+ARG LLVM_VERSION=14.0.4
+ARG CMAKE_VERSION=3.23.2
 # setup build environment
 RUN mkdir /home/build
 
+COPY --from=python /usr/local /usr/local
 COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
 
 ENV NINJA_STATUS="[%f/%t %c/sec] "
@@ -15,7 +17,7 @@ ENV NINJA_STATUS="[%f/%t %c/sec] "
 RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
-RUN yum -y install tar gzip bzip3 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig python3 xz gcc10-c++ binutils-devel python3-devel git
+RUN yum -y install tar gzip bzip3 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig xz gcc10-c++ binutils-devel git openssl11
 
 # for building the ARM64 image, we need newer kernel headers that provide user_sve_header and sve_vl_valid
 # see: https://github.com/llvm/llvm-project/issues/52823
@@ -133,12 +135,14 @@ RUN cd /home/build/llvm-build-stage2 && \
 # Stage 2, copy artifacts to new image and prepare environment
 
 FROM amazonlinux:2
+COPY --from=python /usr/local /usr/local
 COPY --from=builder /home/llvm /usr/local/
 
 # GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
 # Note: G++ is not needed
 # ncurses-devel is needed when developing LLVM-based tools
-RUN yum -y install glibc-devel glibc-static gcc libedit python3 ncurses-devel
+# openssl11 is dependency of python3, which is a dependency of LLDB
+RUN yum -y install glibc-devel glibc-static gcc libedit openssl11 ncurses-devel
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
