@@ -5,7 +5,7 @@ FROM amazonlinux:2 AS builder
 
 ARG BUILDPLATFORM
 ARG LLVM_VERSION=14.0.6
-ARG CMAKE_VERSION=3.23.2
+ARG CMAKE_VERSION=3.24.1
 # setup build environment
 RUN mkdir /home/build
 
