@@ -1,10 +1,10 @@
-FROM microblinkdev/amazonlinux-ninja:1.11.0 as ninja
-FROM microblinkdev/amazonlinux-python:3.10.4 as python
+FROM microblinkdev/amazonlinux-ninja:1.11.1 as ninja
+FROM microblinkdev/amazonlinux-python:3.10.6 as python
 
 FROM amazonlinux:2 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=14.0.6
+ARG LLVM_VERSION=15.0.0
 ARG CMAKE_VERSION=3.24.1
 # setup build environment
 RUN mkdir /home/build
