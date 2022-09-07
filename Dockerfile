@@ -40,7 +40,7 @@ ENV PATH="/home/cmake/bin:${PATH}"  \
 
 # clone LLVM
 RUN cd /home/build && \
-    git clone --depth 1 --branch llvmorg-${LLVM_VERSION} https://github.com/llvm/llvm-project
+    git clone --depth 1 --branch microblink-llvmorg-${LLVM_VERSION} https://github.com/microblink/llvm-project
 
 # build LLVM in two stages
 RUN cd /home/build && \
@@ -85,12 +85,9 @@ RUN cd /home/build && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_ENABLE_PROJECTS="clang;lld;lldb;compiler-rt;libcxx;libcxxabi;libunwind;polly;clang-tools-extra" \
-        # -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
+        -DLLVM_ENABLE_PROJECTS="clang;lld;lldb;compiler-rt;polly;clang-tools-extra" \
+        -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
         -DLLVM_ENABLE_LTO=Thin \
-        # LTO link jobs use lots of RAM which can kill the build server - use 20 jobs (average 6.4 GB per job - some jobs use over 12 GB, but most of them less than 6 GB)
-        # with ThinLTO all CPUs are used for LTO, so don't overcommit the CPU with too many parallel LTO jobs
-        # there is one monolithic LTO job, so 3 effectively means 2
         -DLLVM_PARALLEL_LINK_JOBS=3 \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_USE_LINKER="lld" \
@@ -102,6 +99,8 @@ RUN cd /home/build && \
         -DLLVM_ENABLE_EH=OFF \
         -DLLVM_ENABLE_RTTI=OFF \
         -DLLVM_BUILD_LLVM_DYLIB=ON \
+        -DLLVM_LINK_LLVM_DYLIB=ON \
+        -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON \
         -DCMAKE_INSTALL_PREFIX=/home/llvm \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
