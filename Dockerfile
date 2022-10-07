@@ -81,6 +81,7 @@ ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     LD_LIBRARY_PATH="/home/build/llvm-build-stage1/lib/x86_64-unknown-linux-gnu:/home/build/llvm-build-stage1/lib/aarch64-unknown-linux-gnu"
 
 RUN cd /home/build && \
+    if [ "$BUILDPLATFORM" == "linux/arm64" ]; then additional_flags="-Ofast"; else additional_flags="-Ofast -mavx"; fi && \
     mkdir llvm-build-stage2 && \
     cd llvm-build-stage2 && \
     cmake -GNinja \
@@ -91,8 +92,8 @@ RUN cd /home/build && \
         -DLLVM_PARALLEL_LINK_JOBS=3 \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
         -DLLVM_USE_LINKER="lld" \
-        -DCMAKE_C_FLAGS="-B/usr/local -fsplit-lto-unit" \
-        -DCMAKE_CXX_FLAGS="-B/usr/local -fsplit-lto-unit" \
+        -DCMAKE_C_FLAGS="-B/usr/local -fsplit-lto-unit $additional_flags" \
+        -DCMAKE_CXX_FLAGS="-B/usr/local -fsplit-lto-unit $additional_flags" \
         -DCMAKE_AR="/home/build/llvm-build-stage1/bin/llvm-ar" \
         -DCMAKE_RANLIB="/home/build/llvm-build-stage1/bin/llvm-ranlib" \
         -DCMAKE_NM="/home/build/llvm-build-stage1/bin/llvm-nm" \
