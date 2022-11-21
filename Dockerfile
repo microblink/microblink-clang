@@ -4,8 +4,8 @@ FROM microblinkdev/amazonlinux-python:3.10.8 as python
 FROM amazonlinux:2 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=15.0.4
-ARG CMAKE_VERSION=3.24.3
+ARG LLVM_VERSION=15.0.5
+ARG CMAKE_VERSION=3.25.0
 # setup build environment
 RUN mkdir /home/build
 
