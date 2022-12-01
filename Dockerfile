@@ -71,7 +71,8 @@ RUN cd /home/build && \
 
 ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     CXX="/home/build/llvm-build-stage1/bin/clang++" \
-    LD_LIBRARY_PATH="/home/build/llvm-build-stage1/lib/x86_64-unknown-linux-gnu:/home/build/llvm-build-stage1/lib/aarch64-unknown-linux-gnu"
+    LD_LIBRARY_PATH="/home/build/llvm-build-stage1/lib/x86_64-unknown-linux-gnu:/home/build/llvm-build-stage1/lib/aarch64-unknown-linux-gnu" \
+    LIBRARY_PATH="/usr/lib/gcc/aarch64-amazon-linux/11:/usr/lib/gcc/x86_64-amazon-linux/11"
 
 RUN cd /home/build && \
     if [ "$BUILDPLATFORM" == "linux/arm64" ]; then additional_flags="-Ofast"; else additional_flags="-Ofast -mavx"; fi && \
