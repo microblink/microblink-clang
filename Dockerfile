@@ -1,11 +1,11 @@
 FROM microblinkdev/amazonlinux-ninja:1.11.1 as ninja
 FROM microblinkdev/amazonlinux-python:3.10.8 as python
 
-FROM amazonlinux:2 AS builder
+FROM amazonlinux:2022 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=15.0.5
-ARG CMAKE_VERSION=3.25.0
+ARG LLVM_VERSION=15.0.6
+ARG CMAKE_VERSION=3.25.1
 # setup build environment
 RUN mkdir /home/build
 
@@ -17,13 +17,8 @@ ENV NINJA_STATUS="[%f/%t %c/sec] "
 RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
-RUN yum -y install tar gzip bzip3 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig xz gcc10-c++ binutils-devel git openssl11
-
-# for building the ARM64 image, we need newer kernel headers that provide user_sve_header and sve_vl_valid
-# see: https://github.com/llvm/llvm-project/issues/52823
-# and: https://github.com/spack/spack/issues/27992
-
-RUN amazon-linux-extras install -y kernel-ng && yum -y update
+RUN yum -y update
+RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig xz gcc-c++ binutils-devel git openssl
 
 # download and install CMake
 RUN cd /home && \
@@ -34,9 +29,7 @@ RUN cd /home && \
 
 
 # setup environment variables - use gcc 10 instead of the default gcc 7 which crashes when building LLVM 13.0.1 on Aarch64
-ENV PATH="/home/cmake/bin:${PATH}"  \
-    CC="/usr/bin/gcc10-gcc"         \
-    CXX="/usr/bin/gcc10-g++"
+ENV PATH="/home/cmake/bin:${PATH}"
 
 # clone LLVM
 RUN cd /home/build && \
@@ -138,7 +131,7 @@ COPY --from=builder /home/llvm /usr/local/
 # Note: G++ is not needed
 # ncurses-devel is needed when developing LLVM-based tools
 # openssl11 is dependency of python3, which is a dependency of LLDB
-RUN yum -y install glibc-devel glibc-static gcc libedit openssl11 ncurses-devel
+RUN yum -y install glibc-devel glibc-static gcc libedit openssl ncurses-devel
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
