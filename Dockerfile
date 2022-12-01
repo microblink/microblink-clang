@@ -1,4 +1,4 @@
-FROM microblinkdev/amazonlinux-ninja:1.11.1-al2022 as ninja
+FROM microblinkdev/amazonlinux-ninja:11.1.1-al2022 as ninja
 FROM microblinkdev/amazonlinux-python:3.11.0 as python
 
 FROM amazonlinux:2022 AS builder
