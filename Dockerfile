@@ -1,5 +1,5 @@
-FROM microblinkdev/amazonlinux-ninja:1.11.1 as ninja
-FROM microblinkdev/amazonlinux-python:3.10.8 as python
+FROM microblinkdev/amazonlinux-ninja:1.11.1-al2022 as ninja
+FROM microblinkdev/amazonlinux-python:3.11.0 as python
 
 FROM amazonlinux:2022 AS builder
 
@@ -123,7 +123,7 @@ RUN cd /home/build/llvm-build-stage2 && \
 
 # Stage 2, copy artifacts to new image and prepare environment
 
-FROM amazonlinux:2
+FROM amazonlinux:2022
 COPY --from=python /usr/local /usr/local
 COPY --from=builder /home/llvm /usr/local/
 
