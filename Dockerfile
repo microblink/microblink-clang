@@ -138,4 +138,5 @@ ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
     AR="/usr/local/bin/llvm-ar"         \
     NM="/usr/local/bin/llvm-nm"         \
-    RANLIB="/usr/local/bin/llvm-ranlib"
+    RANLIB="/usr/local/bin/llvm-ranlib" \
+    LIBRARY_PATH="/usr/lib/gcc/aarch64-amazon-linux/11:/usr/lib/gcc/x86_64-amazon-linux/11"
