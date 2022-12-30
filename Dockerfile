@@ -115,6 +115,7 @@ RUN cd /home/build && \
         -DLIBCXX_INCLUDE_BENCHMARKS=OFF \
         -DLIBCXX_INCLUDE_TESTS=OFF \
         -DLIBCXX_INCLUDE_DOCS=OFF \
+        -DLIBUNWIND_ENABLE_ASSERTIONS=OFF \
         /home/build/llvm-project/llvm && \
     ninja
 
