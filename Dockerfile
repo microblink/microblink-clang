@@ -1,11 +1,11 @@
 FROM microblinkdev/amazonlinux-ninja:1.11.1-al2022 as ninja
-FROM microblinkdev/amazonlinux-python:3.11.0 as python
+FROM microblinkdev/amazonlinux-python:3.11.3 as python
 
 FROM amazonlinux:2022 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=15.0.7
-ARG CMAKE_VERSION=3.25.1
+ARG LLVM_VERSION=16.0.1
+ARG CMAKE_VERSION=3.26.3
 # setup build environment
 RUN mkdir /home/build
 
@@ -18,7 +18,7 @@ RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
 RUN yum -y update
-RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig xz gcc-c++ binutils-devel git openssl
+RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig xz gcc-c++ binutils-devel git openssl glibc-langpack-en
 
 # download and install CMake
 RUN cd /home && \
@@ -133,7 +133,7 @@ COPY --from=builder /home/llvm /usr/local/
 # Note: G++ is not needed
 # ncurses-devel is needed when developing LLVM-based tools
 # openssl11 is dependency of python3, which is a dependency of LLDB
-RUN yum -y install glibc-devel glibc-static gcc libedit openssl ncurses-devel
+RUN yum -y install glibc-devel glibc-static gcc libedit openssl ncurses-devel glibc-langpack-en
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
