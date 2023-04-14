@@ -82,6 +82,7 @@ RUN cd /home/build && \
         -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_ENABLE_PROJECTS="clang;lld;lldb;compiler-rt;polly;clang-tools-extra" \
         -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
+        -DLLVM_TARGETS_TO_BUILD="AArch64;ARM;WebAssembly;X86" \
         -DLLVM_ENABLE_LTO=Thin \
         -DLLVM_PARALLEL_LINK_JOBS=3 \
         -DLLVM_BINUTILS_INCDIR="/usr/include" \
