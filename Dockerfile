@@ -17,8 +17,11 @@ ENV NINJA_STATUS="[%f/%t %c/sec] "
 RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
-RUN apt update -y && apt upgrade
+RUN apt update -y && apt upgrade -y
 RUN apt install -y bzip2 zip libedit-dev libxml2-dev libncurses-dev swig lzma g++ binutils-dev git openssl 
+
+# make sure bash is used instead of /bin/sh for RUN commands
+RUN ln -f -s /usr/bin/bash /bin/sh 
 
 # download and install CMake
 RUN cd /home && \
@@ -28,7 +31,6 @@ RUN cd /home && \
     mv cmake-${CMAKE_VERSION}-linux-${arch} cmake
 
 
-# setup environment variables - use gcc 10 instead of the default gcc 7 which crashes when building LLVM 13.0.1 on Aarch64
 ENV PATH="/home/cmake/bin:${PATH}"
 
 # clone LLVM
@@ -134,7 +136,7 @@ COPY --from=builder /home/llvm /usr/local/
 # Note: G++ is not needed
 # ncurses-devel is needed when developing LLVM-based tools
 # openssl11 is dependency of python3, which is a dependency of LLDB
-RUN apt update && apt upgrade
+RUN apt update && apt upgrade -y
 RUN apt install -y libc-dev openssl libedit-dev libncurses-dev 
 
 ENV CC="/usr/local/bin/clang"           \
@@ -143,5 +145,8 @@ ENV CC="/usr/local/bin/clang"           \
     NM="/usr/local/bin/llvm-nm"         \
     RANLIB="/usr/local/bin/llvm-ranlib" \
     LIBRARY_PATH="/usr/lib/gcc/aarch64-linux-gnu/11:/usr/lib/gcc/x86_64-linux-gnu/11"
+
+# make sure bash is used instead of /bin/sh for RUN commands
+RUN ln -f -s /usr/bin/bash /bin/sh 
 
 CMD ["/usr/bin/bash"]
