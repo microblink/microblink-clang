@@ -1,11 +1,11 @@
-FROM microblinkdev/amazonlinux-ninja:1.11.1-al2022 as ninja
-FROM microblinkdev/amazonlinux-python:3.11.3 as python
+FROM microblinkdev/microblink-ninja:1.11.1 as ninja
+FROM microblinkdev/microblink-python:3.12.1 as python
 
-FROM amazonlinux:2022 AS builder
+FROM phusion/baseimage:jammy-1.0.1 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=16.0.5
-ARG CMAKE_VERSION=3.26.4
+ARG LLVM_VERSION=17.0.6
+ARG CMAKE_VERSION=3.28.1
 # setup build environment
 RUN mkdir /home/build
 
@@ -17,8 +17,11 @@ ENV NINJA_STATUS="[%f/%t %c/sec] "
 RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
-RUN yum -y update
-RUN yum -y install tar gzip bzip2 zip unzip libedit-devel libxml2-devel ncurses-devel python-devel swig xz gcc-c++ binutils-devel git openssl glibc-langpack-en
+RUN apt update -y && apt upgrade -y
+RUN apt install -y bzip2 zip libedit-dev libxml2-dev libncurses-dev swig lzma g++ binutils-dev git openssl 
+
+# make sure bash is used instead of /bin/sh for RUN commands
+RUN ln -f -s /usr/bin/bash /bin/sh 
 
 # download and install CMake
 RUN cd /home && \
@@ -28,7 +31,6 @@ RUN cd /home && \
     mv cmake-${CMAKE_VERSION}-linux-${arch} cmake
 
 
-# setup environment variables - use gcc 10 instead of the default gcc 7 which crashes when building LLVM 13.0.1 on Aarch64
 ENV PATH="/home/cmake/bin:${PATH}"
 
 # clone LLVM
@@ -72,7 +74,7 @@ RUN cd /home/build && \
 ENV CC="/home/build/llvm-build-stage1/bin/clang"    \
     CXX="/home/build/llvm-build-stage1/bin/clang++" \
     LD_LIBRARY_PATH="/home/build/llvm-build-stage1/lib/x86_64-unknown-linux-gnu:/home/build/llvm-build-stage1/lib/aarch64-unknown-linux-gnu" \
-    LIBRARY_PATH="/usr/lib/gcc/aarch64-amazon-linux/11:/usr/lib/gcc/x86_64-amazon-linux/11"
+    LIBRARY_PATH="/usr/lib/gcc/aarch64-linux-gnu/11:/usr/lib/gcc/x86_64-linux-gnu/11"
 
 RUN cd /home/build && \
     if [ "$BUILDPLATFORM" == "linux/arm64" ]; then additional_flags="-Ofast"; else additional_flags="-Ofast -mavx"; fi && \
@@ -126,7 +128,7 @@ RUN cd /home/build/llvm-build-stage2 && \
 
 # Stage 2, copy artifacts to new image and prepare environment
 
-FROM amazonlinux:2022
+FROM phusion/baseimage:jammy-1.0.1
 COPY --from=python /usr/local /usr/local
 COPY --from=builder /home/llvm /usr/local/
 
@@ -134,11 +136,17 @@ COPY --from=builder /home/llvm /usr/local/
 # Note: G++ is not needed
 # ncurses-devel is needed when developing LLVM-based tools
 # openssl11 is dependency of python3, which is a dependency of LLDB
-RUN yum -y install glibc-devel glibc-static gcc libedit openssl ncurses-devel glibc-langpack-en
+RUN apt update && apt upgrade -y
+RUN apt install -y libc-dev libatomic1 openssl libedit-dev libncurses-dev 
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
     AR="/usr/local/bin/llvm-ar"         \
     NM="/usr/local/bin/llvm-nm"         \
     RANLIB="/usr/local/bin/llvm-ranlib" \
-    LIBRARY_PATH="/usr/lib/gcc/aarch64-amazon-linux/11:/usr/lib/gcc/x86_64-amazon-linux/11"
+    LIBRARY_PATH="/usr/lib/gcc/aarch64-linux-gnu/11:/usr/lib/gcc/x86_64-linux-gnu/11"
+
+# make sure bash is used instead of /bin/sh for RUN commands
+RUN ln -f -s /usr/bin/bash /bin/sh 
+
+CMD ["/usr/bin/bash"]
