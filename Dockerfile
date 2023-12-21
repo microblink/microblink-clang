@@ -134,7 +134,8 @@ COPY --from=builder /home/llvm /usr/local/
 # Note: G++ is not needed
 # ncurses-devel is needed when developing LLVM-based tools
 # openssl11 is dependency of python3, which is a dependency of LLDB
-RUN yum -y install libc-dev openssl ncurses-dev 
+RUN apt update && apt upgrade
+RUN apt install -y libc-dev openssl libedit-dev libncurses-dev 
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
