@@ -8,7 +8,6 @@ ARG CMAKE_VERSION=3.28.1
 # setup build environment
 RUN mkdir /home/build
 
-COPY --from=python /usr/local /usr/local
 COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/
 
 ENV NINJA_STATUS="[%f/%t %c/sec] "
@@ -128,7 +127,6 @@ RUN cd /home/build/llvm-build-stage2 && \
 # Stage 2, copy artifacts to new image and prepare environment
 
 FROM phusion/baseimage:jammy-1.0.1
-COPY --from=python /usr/local /usr/local
 COPY --from=builder /home/llvm /usr/local/
 
 # GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
@@ -147,5 +145,8 @@ ENV CC="/usr/local/bin/clang"           \
 
 # make sure bash is used instead of /bin/sh for RUN commands
 RUN ln -f -s /usr/bin/bash /bin/sh 
+
+# also make sure python executable exists as some scripts don't invoke python3
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 CMD ["/usr/bin/bash"]
