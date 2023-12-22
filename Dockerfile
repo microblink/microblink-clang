@@ -146,7 +146,4 @@ ENV CC="/usr/local/bin/clang"           \
 # make sure bash is used instead of /bin/sh for RUN commands
 RUN ln -f -s /usr/bin/bash /bin/sh 
 
-# also make sure python executable exists as some scripts don't invoke python3
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
 CMD ["/usr/bin/bash"]
