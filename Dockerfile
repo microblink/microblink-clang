@@ -1,5 +1,4 @@
 FROM microblinkdev/microblink-ninja:1.11.1 as ninja
-FROM microblinkdev/microblink-python:3.12.1 as python
 
 FROM phusion/baseimage:jammy-1.0.1 AS builder
 
@@ -18,7 +17,7 @@ RUN echo "BUILDPLATFORM is ${BUILDPLATFORM}"
 
 # install packages required for build
 RUN apt update -y && apt upgrade -y
-RUN apt install -y bzip2 zip libedit-dev libxml2-dev libncurses-dev swig lzma g++ binutils-dev git openssl 
+RUN apt install -y bzip2 zip libedit-dev libxml2-dev libncurses-dev swig lzma g++ binutils-dev git openssl python3-pip python3-dev
 
 # make sure bash is used instead of /bin/sh for RUN commands
 RUN ln -f -s /usr/bin/bash /bin/sh 
@@ -137,7 +136,7 @@ COPY --from=builder /home/llvm /usr/local/
 # ncurses-devel is needed when developing LLVM-based tools
 # openssl11 is dependency of python3, which is a dependency of LLDB
 RUN apt update && apt upgrade -y
-RUN apt install -y libc-dev libatomic1 openssl libedit-dev libncurses-dev 
+RUN apt install -y libc-dev libatomic1 openssl libedit-dev libncurses-dev python3-pip
 
 ENV CC="/usr/local/bin/clang"           \
     CXX="/usr/local/bin/clang++"        \
