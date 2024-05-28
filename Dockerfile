@@ -141,7 +141,7 @@ ENV CC="/usr/local/bin/clang"           \
     AR="/usr/local/bin/llvm-ar"         \
     NM="/usr/local/bin/llvm-nm"         \
     RANLIB="/usr/local/bin/llvm-ranlib" \
-    LIBRARY_PATH="/usr/lib/gcc/aarch64-linux-gnu/11:/usr/lib/gcc/x86_64-linux-gnu/11"
+    LIBRARY_PATH="/usr/lib/gcc/aarch64-linux-gnu/13:/usr/lib/gcc/x86_64-linux-gnu/13"
 
 # make sure bash is used instead of /bin/sh for RUN commands
 RUN ln -f -s /usr/bin/bash /bin/sh 
