@@ -1,10 +1,10 @@
-FROM microblinkdev/microblink-ninja:1.11.1 as ninja
+FROM microblinkdev/microblink-ninja:1.12.1 as ninja
 
-FROM phusion/baseimage:jammy-1.0.1 AS builder
+FROM phusion/baseimage:noble-1.0.0 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=17.0.6
-ARG CMAKE_VERSION=3.28.1
+ARG LLVM_VERSION=18.1.6
+ARG CMAKE_VERSION=3.29.3
 # setup build environment
 RUN mkdir /home/build
 
@@ -126,7 +126,7 @@ RUN cd /home/build/llvm-build-stage2 && \
 
 # Stage 2, copy artifacts to new image and prepare environment
 
-FROM phusion/baseimage:jammy-1.0.1
+FROM phusion/baseimage:noble-1.0.0
 COPY --from=builder /home/llvm /usr/local/
 
 # GCC is needed for providing crtbegin.o, crtend.o and friends, that are also used by clang
