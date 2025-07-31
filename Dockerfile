@@ -146,4 +146,10 @@ ENV CC="/usr/local/bin/clang"           \
 # make sure bash is used instead of /bin/sh for RUN commands
 RUN ln -f -s /usr/bin/bash /bin/sh 
 
+ARG BUILDPLATFORM
+
+# ensure libc++ and libc++abi are available in /usr/lib
+RUN if [ "$BUILDPLATFORM" == "linux/arm64" ]; then arch=aarch64; else arch=x86_64; fi && \
+    cp /usr/local/lib/${arch}-unknown-linux-gnu/lib* /usr/lib/
+
 CMD ["/usr/bin/bash"]
