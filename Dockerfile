@@ -3,8 +3,8 @@ FROM microblinkdev/microblink-ninja:1.13.1 AS ninja
 FROM phusion/baseimage:noble-1.0.2 AS builder
 
 ARG BUILDPLATFORM
-ARG LLVM_VERSION=20.1.8
-ARG CMAKE_VERSION=4.0.3
+ARG LLVM_VERSION=21.1.1
+ARG CMAKE_VERSION=4.1.1
 # setup build environment
 RUN mkdir /home/build
 
